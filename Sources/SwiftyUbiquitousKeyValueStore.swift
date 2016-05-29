@@ -24,13 +24,12 @@
 
 import Foundation
 
-public extension NSUserDefaults {
+public extension NSUbiquitousKeyValueStore {
     class Proxy: ProxyType {
-        
-        var defaults: NSUserDefaults
+        var defaults: NSUbiquitousKeyValueStore
         var key: String
         
-        required public init(_ defaults: NSUserDefaults, _ key: String) {
+        required public init(_ defaults: NSUbiquitousKeyValueStore, _ key: String) {
             self.defaults = defaults
             self.key = key
         }
@@ -38,31 +37,46 @@ public extension NSUserDefaults {
     }
 }
 
-extension NSUserDefaults: DefaultsType {
+// MARK: - DefaultsType
+
+extension NSUbiquitousKeyValueStore: DefaultsType {
     
     /// Removes all keys and values from user defaults
     /// Use with caution!
-    /// - Note: This method only removes keys on the receiver `NSUserDefaults` object.
+    /// - Note: This method only removes keys on the receiver `NSUbiquitousKeyValueStore` object.
     ///         System-defined keys will still be present afterwards.
+    
     public func removeAll() {
-        for (key, _) in dictionaryRepresentation() {
+        for (key, _) in dictionaryRepresentation {
             removeObjectForKey(key)
         }
     }
     
+    public func setInteger(value: Int, forKey aKey: String) {
+        setObject(value, forKey: aKey)
+    }
+    
+    public func integerForKey(aKey: String) -> Int {
+        return objectForKey(aKey) as? Int ?? 0
+    }
+    
+    public func setURL(url: NSURL?, forKey aKey: String) {
+        setObject(url, forKey: aKey)
+    }
+
+    public func URLForKey(aKey: String) -> NSURL? {
+        return objectForKey(aKey) as? NSURL
+    }
+
 }
 
-/// Global shortcut for `NSUserDefaults.standardUserDefaults()`
-///
-/// **Pro-Tip:** If you want to use shared user defaults, just
-///  redefine this global shortcut in your app target, like so:
-///  ~~~
-///  var Defaults = NSUserDefaults(suiteName: "com.my.app")!
-///  ~~~
+/// Global shortcut for `NSUbiquitousKeyValueStore.defaultStore()`
 
-public let Defaults = NSUserDefaults.standardUserDefaults()
+public let iCloudDefaults = NSUbiquitousKeyValueStore.defaultStore()
 
-extension NSUserDefaults: SwiftyDefaults {
+// MARK: - SwiftyDefaults
+
+extension NSUbiquitousKeyValueStore: SwiftyDefaults {
     
     /// Returns getter proxy for `key`
     
@@ -91,7 +105,7 @@ extension NSUserDefaults: SwiftyDefaults {
             }
         }
     }
-
+    
 }
 
 // MARK: - Deprecations
@@ -106,7 +120,7 @@ precedence 90
 /// Note: If key already exists, the expression after ?= isn't evaluated
 
 @available(*, deprecated=1, message="Please migrate to static keys and use this gist: https://gist.github.com/radex/68de9340b0da61d43e60")
-public func ?= (proxy: NSUserDefaults.Proxy, @autoclosure expr: () -> Any) {
+public func ?= (proxy: NSUbiquitousKeyValueStore.Proxy, @autoclosure expr: () -> Any) {
     if !proxy.defaults.hasKey(proxy.key) {
         proxy.defaults[proxy.key] = expr()
     }
@@ -116,13 +130,13 @@ public func ?= (proxy: NSUserDefaults.Proxy, @autoclosure expr: () -> Any) {
 /// If key doesn't exist or isn't a number, sets value to `b`
 
 @available(*, deprecated=1, message="Please migrate to static keys to use this.")
-public func += (proxy: NSUserDefaults.Proxy, b: Int) {
+public func += (proxy: NSUbiquitousKeyValueStore.Proxy, b: Int) {
     let a = proxy.defaults[proxy.key].intValue
     proxy.defaults[proxy.key] = a + b
 }
 
 @available(*, deprecated=1, message="Please migrate to static keys to use this.")
-public func += (proxy: NSUserDefaults.Proxy, b: Double) {
+public func += (proxy: NSUbiquitousKeyValueStore.Proxy, b: Double) {
     let a = proxy.defaults[proxy.key].doubleValue
     proxy.defaults[proxy.key] = a + b
 }
@@ -131,6 +145,6 @@ public func += (proxy: NSUserDefaults.Proxy, b: Double) {
 /// If key doesn't exist or isn't a number, sets value to 1
 
 @available(*, deprecated=1, message="Please migrate to static keys to use this.")
-public postfix func ++ (proxy: NSUserDefaults.Proxy) {
+public postfix func ++ (proxy: NSUbiquitousKeyValueStore.Proxy) {
     proxy += 1
 }
